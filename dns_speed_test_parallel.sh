@@ -41,13 +41,19 @@ test_dns() {
 # Run tests in parallel
 while read -r DNS_SERVER; do
     if [[ -n "$DNS_SERVER" ]]; then
-        test_dns "$DNS_SERVER" &
+        test_dns "$DNS_SERVER" &  # Run in background
     fi
 done < dns_servers.txt
 
 # Wait for all background processes to finish (max 10s)
 sleep 10
 wait
+
+# Display all results
+echo "-------------------------------------"
+echo "All DNS Servers Tested:"
+cat "$RESULTS_FILE"
+echo "-------------------------------------"
 
 # Determine best response time
 BEST_SERVER=""
@@ -65,12 +71,12 @@ done < "$RESULTS_FILE"
 echo "-------------------------------------"
 echo "Best DNS Server: $BEST_SERVER with response time: $BEST_RESPONSE_TIME ms"
 
-# Get the current active Wi-Fi connection name
-CURRENT_CONNECTION=$(nmcli -t -f NAME,ACTIVE con show --active | grep ':yes' | cut -d':' -f1)
+# Get the current active network connection (excluding 'lo')
+CURRENT_CONNECTION=$(nmcli -t -f NAME,ACTIVE con show --active | grep ':yes' | cut -d':' -f1 | grep -v "lo")
 
 # Check if we have a valid connection
 if [ -z "$CURRENT_CONNECTION" ]; then
-    echo "Error: No active Wi-Fi connection found."
+    echo "Error: No active network connection found."
     exit 1
 fi
 
